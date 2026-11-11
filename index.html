@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f7fb">
+    <title>Clearbill — Receivables</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #172033;
+        background: #f5f7fb;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        --muted: #718096;
+        --line: #e8ecf3;
+        --blue: #3659d9;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; min-width: 320px; }
+      button, input, select { font: inherit; }
+      button { cursor: pointer; }
+
+      .topbar {
+        height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 max(24px, calc((100% - 1180px) / 2));
+        background: #fff;
+        border-bottom: 1px solid var(--line);
+      }
+      .brand { display: flex; align-items: center; gap: 11px; font-size: 17px; font-weight: 750; letter-spacing: -.4px; }
+      .brand-mark {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        color: #fff;
+        background: var(--blue);
+        font-size: 18px;
+      }
+      .workspace { color: var(--muted); font-size: 13px; }
+      .workspace strong { color: #364152; font-weight: 600; }
+
+      main { max-width: 1180px; margin: 0 auto; padding: 44px 24px 64px; }
+      .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 30px; }
+      h1 { margin: 0 0 7px; font-size: clamp(26px, 4vw, 32px); letter-spacing: -1px; }
+      .subtitle { margin: 0; color: var(--muted); font-size: 14px; }
+      .primary-button {
+        min-height: 42px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 16px;
+        border: 0;
+        border-radius: 8px;
+        color: #fff;
+        background: var(--blue);
+        font-size: 13px;
+        font-weight: 650;
+        box-shadow: 0 3px 8px #3659d926;
+      }
+      .primary-button:hover { background: #2949c5; }
+      .primary-button:focus-visible, .text-button:focus-visible, input:focus-visible, select:focus-visible {
+        outline: 3px solid #9db1ff;
+        outline-offset: 2px;
+      }
+
+      .summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-bottom: 30px; }
+      .summary-card { min-height: 132px; padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+      .summary-label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 600; }
+      .summary-icon { width: 25px; height: 25px; display: grid; place-items: center; border-radius: 7px; background: #f0f3ff; color: var(--blue); font-size: 13px; }
+      .summary-icon.orange { color: #c76b20; background: #fff3e8; }
+      .summary-icon.green { color: #188154; background: #e9f8f0; }
+      .summary-value { margin-top: 15px; font-size: 25px; font-weight: 720; letter-spacing: -.8px; }
+      .summary-note { margin-top: 4px; color: var(--muted); font-size: 11px; }
+
+      .invoice-panel { border: 1px solid var(--line); border-radius: 12px; background: #fff; overflow: hidden; }
+      .panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 21px 22px; }
+      h2 { margin: 0; font-size: 16px; letter-spacing: -.2px; }
+      .invoice-count { margin-left: 8px; color: #8a94a5; font-size: 12px; font-weight: 500; }
+      .filters { display: flex; gap: 9px; }
+      .search, .status-filter {
+        height: 37px;
+        border: 1px solid #dfe4ec;
+        border-radius: 7px;
+        background: #fff;
+        color: #344054;
+        font-size: 12px;
+      }
+      .search { width: 220px; padding: 0 11px; }
+      .status-filter { padding: 0 30px 0 10px; }
+      .table-wrap { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; text-align: left; }
+      th { height: 42px; padding: 0 22px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: #fafbfc; color: #8791a1; font-size: 10px; font-weight: 650; letter-spacing: .65px; text-transform: uppercase; }
+      td { height: 68px; padding: 0 22px; border-bottom: 1px solid #eff1f5; color: #344054; font-size: 12px; white-space: nowrap; }
+      tbody tr:last-child td { border-bottom: 0; }
+      .invoice-number { color: #263248; font-weight: 650; }
+      .client-name { margin-top: 4px; color: var(--muted); font-size: 11px; }
+      .amount { color: #1c2738; font-weight: 650; }
+      .badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 8px; border-radius: 20px; font-size: 10px; font-weight: 650; }
+      .badge::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
+      .badge.overdue { color: #c2413b; background: #fff0ef; }
+      .badge.due { color: #b66a12; background: #fff6e9; }
+      .badge.open { color: #52657e; background: #f0f3f7; }
+      .badge.paid { color: #1b8056; background: #eaf8f1; }
+      .text-button { padding: 6px 0 6px 8px; border: 0; background: none; color: var(--blue); font-size: 11px; font-weight: 650; }
+      .text-button:hover { color: #213fae; text-decoration: underline; }
+      .empty-state { padding: 56px 20px 60px; text-align: center; }
+      .empty-icon { width: 45px; height: 45px; display: grid; place-items: center; margin: 0 auto 13px; border-radius: 13px; background: #f0f3ff; color: var(--blue); font-size: 20px; }
+      .empty-state h3 { margin: 0 0 6px; font-size: 14px; }
+      .empty-state p { margin: 0 0 16px; color: var(--muted); font-size: 12px; }
+      .empty-state .primary-button { min-height: 36px; font-size: 12px; }
+      .notice { min-height: 20px; margin: 10px 0 0; color: #b5473f; font-size: 12px; }
+
+      dialog {
+        width: min(440px, calc(100% - 32px));
+        padding: 0;
+        border: 0;
+        border-radius: 14px;
+        color: #172033;
+        box-shadow: 0 24px 80px #17203338;
+      }
+      dialog::backdrop { background: #16203380; }
+      .dialog-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 23px 24px 18px; border-bottom: 1px solid var(--line); }
+      .dialog-header h2 { margin-bottom: 5px; font-size: 18px; }
+      .dialog-header p { margin: 0; color: var(--muted); font-size: 12px; }
+      .close-button { border: 0; background: none; color: #748094; font-size: 22px; line-height: 1; }
+      form { padding: 20px 24px 24px; }
+      .form-field { margin-bottom: 15px; }
+      .form-field label { display: block; margin-bottom: 6px; color: #364152; font-size: 11px; font-weight: 650; }
+      .form-field input { width: 100%; height: 39px; padding: 0 10px; border: 1px solid #dfe4ec; border-radius: 7px; color: #253148; font-size: 12px; }
+      .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+      .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+      .cancel-button { min-height: 39px; padding: 0 14px; border: 1px solid #dfe4ec; border-radius: 7px; background: #fff; color: #475467; font-size: 12px; }
+      .form-actions .primary-button { min-height: 39px; }
+
+      @media (max-width: 760px) {
+        .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .page-heading { align-items: flex-start; }
+        .panel-heading { align-items: flex-start; flex-direction: column; }
+        .filters { width: 100%; }
+        .search { flex: 1; min-width: 0; }
+        th, td { padding-right: 14px; padding-left: 14px; }
+      }
+      @media (max-width: 480px) {
+        .topbar { height: 62px; padding: 0 18px; }
+        .workspace { font-size: 11px; }
+        main { padding: 30px 16px 44px; }
+        .page-heading { gap: 12px; }
+        .page-heading .primary-button { padding: 0 11px; font-size: 11px; white-space: nowrap; }
+        .summary-grid { gap: 10px; margin-bottom: 20px; }
+        .summary-card { min-height: 118px; padding: 14px; }
+        .summary-value { font-size: 22px; }
+        .panel-heading { padding: 17px 15px; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">✓</span> clearbill</div>
+      <div class="workspace">Workspace&nbsp; <strong>My business</strong></div>
+    </header>
+    <main>
+      <section class="page-heading" aria-labelledby="page-title">
+        <div>
+          <h1 id="page-title">Receivables</h1>
+          <p class="subtitle">Keep track of what’s owed and what’s coming in.</p>
+        </div>
+        <button class="primary-button" id="open-dialog" type="button"><span aria-hidden="true">＋</span> Add invoice</button>
+      </section>
+
+      <section class="summary-grid" aria-label="Receivables summary">
+        <article class="summary-card">
+          <div class="summary-label"><span class="summary-icon" aria-hidden="true">↗</span> Total outstanding</div>
+          <div class="summary-value" id="outstanding-total">$0.00</div>
+          <div class="summary-note" id="outstanding-note">Across 0 unpaid invoices</div>
+        </article>
+        <article class="summary-card">
+          <div class="summary-label"><span class="summary-icon orange" aria-hidden="true">!</span> Overdue</div>
+          <div class="summary-value" id="overdue-total">$0.00</div>
+          <div class="summary-note" id="overdue-note">0 invoices need attention</div>
+        </article>
+        <article class="summary-card">
+          <div class="summary-label"><span class="summary-icon" aria-hidden="true">◷</span> Due in 7 days</div>
+          <div class="summary-value" id="upcoming-total">$0.00</div>
+          <div class="summary-note" id="upcoming-note">0 invoices coming due</div>
+        </article>
+        <article class="summary-card">
+          <div class="summary-label"><span class="summary-icon green" aria-hidden="true">✓</span> Collected this month</div>
+          <div class="summary-value" id="collected-total">$0.00</div>
+          <div class="summary-note">Payments marked received this month</div>
+        </article>
+      </section>
+
+      <section class="invoice-panel" aria-labelledby="invoice-heading">
+        <div class="panel-heading">
+          <h2 id="invoice-heading">Invoices <span class="invoice-count" id="invoice-count"></span></h2>
+          <div class="filters">
+            <label>
+              <span class="visually-hidden" hidden>Search invoices</span>
+              <input class="search" id="search" type="search" placeholder="Search client or invoice…" aria-label="Search client or invoice">
+            </label>
+            <label>
+              <span hidden>Filter by status</span>
+              <select class="status-filter" id="status-filter" aria-label="Filter by status">
+                <option value="all">All invoices</option>
+                <option value="outstanding">Outstanding</option>
+                <option value="overdue">Overdue</option>
+                <option value="paid">Paid</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div id="invoice-content"></div>
+      </section>
+      <p class="notice" id="notice" role="status" aria-live="polite"></p>
+    </main>
+
+    <dialog id="invoice-dialog" aria-labelledby="dialog-title">
+      <div class="dialog-header">
+        <div><h2 id="dialog-title">Add an invoice</h2><p>Enter the details so you can keep an eye on payment.</p></div>
+        <button class="close-button" id="close-dialog" type="button" aria-label="Close dialog">×</button>
+      </div>
+      <form id="invoice-form">
+        <div class="form-field">
+          <label for="client">Client name</label>
+          <input id="client" name="client" maxlength="80" autocomplete="organization" required>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label for="number">Invoice number</label>
+            <input id="number" name="number" maxlength="40" placeholder="e.g. INV-1042" required>
+          </div>
+          <div class="form-field">
+            <label for="amount">Amount (USD)</label>
+            <input id="amount" name="amount" type="number" min="0.01" max="999999999" step="0.01" placeholder="0.00" required>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="due-date">Due date</label>
+          <input id="due-date" name="dueDate" type="date" required>
+        </div>
+        <div class="form-actions">
+          <button class="cancel-button" id="cancel-dialog" type="button">Cancel</button>
+          <button class="primary-button" type="submit">Save invoice</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script>
+      (() => {
+        const storageKey = "clearbill-invoices-v1";
+        const dialog = document.querySelector("#invoice-dialog");
+        const form = document.querySelector("#invoice-form");
+        const search = document.querySelector("#search");
+        const statusFilter = document.querySelector("#status-filter");
+        const notice = document.querySelector("#notice");
+        const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+        let invoices = loadInvoices();
+
+        function loadInvoices() {
+          try {
+            const stored = JSON.parse(localStorage.getItem(storageKey) || "[]");
+            return Array.isArray(stored) ? stored.filter((invoice) =>
+              invoice && typeof invoice.number === "string" &&
+              typeof invoice.client === "string" &&
+              Number.isFinite(invoice.amount) && invoice.amount > 0 &&
+              typeof invoice.dueDate === "string"
+            ) : [];
+          } catch {
+            return [];
+          }
+        }
+
+        function saveInvoices(nextInvoices = invoices) {
+          try {
+            localStorage.setItem(storageKey, JSON.stringify(nextInvoices));
+            invoices = nextInvoices;
+            notice.textContent = "";
+            return true;
+          } catch {
+            notice.textContent = "Could not save changes in this browser. Check available storage and try again.";
+            return false;
+          }
+        }
+
+        function dateAtMidnight(value) {
+          const date = new Date(`${value}T00:00:00`);
+          return Number.isNaN(date.getTime()) ? null : date;
+        }
+
+        function isPaid(invoice) {
+          return Boolean(invoice.paidAt);
+        }
+
+        function statusOf(invoice) {
+          if (isPaid(invoice)) return "paid";
+          const due = dateAtMidnight(invoice.dueDate);
+          if (!due) return "open";
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (due < today) return "overdue";
+          const weekFromNow = new Date(today);
+          weekFromNow.setDate(weekFromNow.getDate() + 7);
+          return due <= weekFromNow ? "due" : "open";
+        }
+
+        function renderSummary() {
+          const unpaid = invoices.filter((invoice) => !isPaid(invoice));
+          const overdue = unpaid.filter((invoice) => statusOf(invoice) === "overdue");
+          const upcoming = unpaid.filter((invoice) => {
+            const due = dateAtMidnight(invoice.dueDate);
+            return due && due >= new Date(new Date().setHours(0, 0, 0, 0)) && statusOf(invoice) === "due";
+          });
+          const now = new Date();
+          const collected = invoices.filter((invoice) => {
+            if (!invoice.paidAt) return false;
+            const paidAt = new Date(invoice.paidAt);
+            return !Number.isNaN(paidAt.getTime()) && paidAt.getMonth() === now.getMonth() && paidAt.getFullYear() === now.getFullYear();
+          });
+          document.querySelector("#outstanding-total").textContent = money.format(unpaid.reduce((sum, invoice) => sum + invoice.amount, 0));
+          document.querySelector("#outstanding-note").textContent = `Across ${unpaid.length} unpaid ${unpaid.length === 1 ? "invoice" : "invoices"}`;
+          document.querySelector("#overdue-total").textContent = money.format(overdue.reduce((sum, invoice) => sum + invoice.amount, 0));
+          document.querySelector("#overdue-note").textContent = `${overdue.length} ${overdue.length === 1 ? "invoice needs" : "invoices need"} attention`;
+          document.querySelector("#upcoming-total").textContent = money.format(upcoming.reduce((sum, invoice) => sum + invoice.amount, 0));
+          document.querySelector("#upcoming-note").textContent = `${upcoming.length} ${upcoming.length === 1 ? "invoice coming" : "invoices coming"} due`;
+          document.querySelector("#collected-total").textContent = money.format(collected.reduce((sum, invoice) => sum + invoice.amount, 0));
+        }
+
+        function renderInvoices() {
+          const query = search.value.trim().toLocaleLowerCase();
+          const filter = statusFilter.value;
+          const visible = invoices
+            .filter((invoice) => `${invoice.client} ${invoice.number}`.toLocaleLowerCase().includes(query))
+            .filter((invoice) => {
+              const status = statusOf(invoice);
+              if (filter === "paid") return status === "paid";
+              if (filter === "overdue") return status === "overdue";
+              if (filter === "outstanding") return status !== "paid";
+              return true;
+            })
+            .sort((a, b) => {
+              if (isPaid(a) !== isPaid(b)) return isPaid(a) ? 1 : -1;
+              return a.dueDate.localeCompare(b.dueDate);
+            });
+          document.querySelector("#invoice-count").textContent = `(${visible.length})`;
+          const content = document.querySelector("#invoice-content");
+          if (!visible.length) {
+            const hasInvoices = invoices.length > 0;
+            content.innerHTML = `<div class="empty-state"><div class="empty-icon" aria-hidden="true">${hasInvoices ? "⌕" : "＋"}</div><h3>${hasInvoices ? "No invoices match" : "Nothing due yet"}</h3><p>${hasInvoices ? "Try another search or status filter." : "Add your first invoice to start tracking what clients owe."}</p>${hasInvoices ? "" : '<button class="primary-button" id="empty-add" type="button">Add your first invoice</button>'}</div>`;
+            document.querySelector("#empty-add")?.addEventListener("click", openDialog);
+            return;
+          }
+          content.innerHTML = `<div class="table-wrap"><table><thead><tr><th scope="col">Invoice</th><th scope="col">Due date</th><th scope="col">Amount</th><th scope="col">Status</th><th scope="col"><span class="visually-hidden" hidden>Action</span></th></tr></thead><tbody>${visible.map((invoice) => {
+            const status = statusOf(invoice);
+            const labels = { overdue: "Overdue", due: "Due soon", open: "Outstanding", paid: "Paid" };
+            const date = dateAtMidnight(invoice.dueDate);
+            const dateText = date ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(date) : "—";
+            return `<tr><td><div class="invoice-number">${escapeHTML(invoice.number)}</div><div class="client-name">${escapeHTML(invoice.client)}</div></td><td>${dateText}</td><td class="amount">${money.format(invoice.amount)}</td><td><span class="badge ${status}">${labels[status]}</span></td><td><button class="text-button" type="button" data-invoice="${escapeHTML(invoice.number)}" data-action="${isPaid(invoice) ? "reopen" : "paid"}">${isPaid(invoice) ? "Reopen" : "Mark paid"}</button></td></tr>`;
+          }).join("")}</tbody></table></div>`;
+          content.querySelectorAll("[data-action]").forEach((button) => {
+            button.addEventListener("click", () => updatePayment(button.dataset.invoice, button.dataset.action));
+          });
+        }
+
+        function escapeHTML(value) {
+          return value.replace(/[&<>"']/g, (character) => ({
+            "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+          })[character]);
+        }
+
+        function render() {
+          renderSummary();
+          renderInvoices();
+        }
+
+        function openDialog() {
+          form.reset();
+          notice.textContent = "";
+          dialog.showModal();
+          document.querySelector("#client").focus();
+        }
+
+        function updatePayment(number, action) {
+          const invoice = invoices.find((item) => item.number === number);
+          if (!invoice) return;
+          const updated = invoices.map((item) => {
+            if (item.number !== number) return item;
+            if (action === "paid") return { ...item, paidAt: new Date().toISOString() };
+            const { paidAt, ...reopened } = item;
+            return reopened;
+          });
+          if (saveInvoices(updated)) render();
+        }
+
+        document.querySelector("#open-dialog").addEventListener("click", openDialog);
+        document.querySelector("#close-dialog").addEventListener("click", () => dialog.close());
+        document.querySelector("#cancel-dialog").addEventListener("click", () => dialog.close());
+        search.addEventListener("input", renderInvoices);
+        statusFilter.addEventListener("change", renderInvoices);
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const data = new FormData(form);
+          const number = data.get("number").trim();
+          const client = data.get("client").trim();
+          if (!client || !number) {
+            notice.textContent = "Enter a client name and invoice number.";
+            return;
+          }
+          if (invoices.some((invoice) => invoice.number.toLocaleLowerCase() === number.toLocaleLowerCase())) {
+            notice.textContent = "That invoice number is already in use.";
+            document.querySelector("#number").focus();
+            return;
+          }
+          const amount = Number(data.get("amount"));
+          if (!Number.isFinite(amount) || amount <= 0) return;
+          const nextInvoices = [...invoices, {
+            client,
+            number,
+            amount: Math.round(amount * 100) / 100,
+            dueDate: data.get("dueDate")
+          }];
+          if (saveInvoices(nextInvoices)) {
+            dialog.close();
+            search.value = "";
+            statusFilter.value = "all";
+            render();
+          }
+        });
+
+        render();
+      })();
+    </script>
+  </body>
+</html>
